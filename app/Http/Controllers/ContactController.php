@@ -4,18 +4,52 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Contact;
+use App\Bottle;
 use Validator;
+use Illuminate\Support\Facades\Auth;
+use App\User;
 
 class ContactController extends Controller
 {
     //
     public function get()
     {
-        return Contact::all();
+        $user = Auth::user();
+        // return Contact::where('u_id', $user->id)->get();
+        $contactdata = Contact::where('u_id', $user->id)->get();
+        if ($contactdata != '[]') {
+            $newdata = $contactdata->map(function ($item) {
+                $contactdata = Bottle::where('status', 'No')->Where('c_id', $item->id)->get();
+
+                $newdata2 = $contactdata->map(function ($rec) {
+                    return $rec->num_of_bottle * $rec->price;
+                });
+
+                $total = $newdata2->sum();
+
+                $item->pendingamount = $total > 0 ? $total : 0;
+                return $item;
+            });
+
+            return response()->json([
+                'contactdata' => $newdata,
+            ], 200);
+        } else {
+            return response()->json(['message' => 'No record found'], 422);
+        }
     }
     public function specific($id)
     {
-        return Contact::find($id);
+        $user = Auth::user();
+        $contactdata = Contact::where('u_id', $user->id)->Where('id', $id)->get();
+
+        if ($contactdata != '[]') {
+            return $contactdata;
+        } else {
+            return response()->json(['message' => 'No record found'], 422);
+        }
+        // return Contact::find($id);
+
     }
     public function create(Request $request)
     {
@@ -30,10 +64,15 @@ class ContactController extends Controller
         if ($validator->fails()) {
             return $validator->errors();
         } else {
+            $user = Auth::user();
+
             $item = new Contact;
             $item->name = $request->name;
             $item->address = $request->address;
             $item->phone = $request->phone;
+            $item->num_of_bottle = 0;
+            $item->u_id = $user->id;
+            $item->price_bottle = $request->price_bottle;
             $item->save();
             if ($item->save()) {
                 return response()->json(['success' => $item], 200);

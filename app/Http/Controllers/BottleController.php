@@ -5,12 +5,26 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Bottle;
 use Validator;
+use Illuminate\Support\Facades\Auth;
 
 class BottleController extends Controller
 {
     public function index($id = null)
     {
-        return $id ? Bottle::find($id) : Bottle::all();
+        $user = Auth::user();
+        // return $id ? Bottle::find($id) : Bottle::all();
+        $contactdata = Bottle::where('u_id', $user->id)->Where('c_id', $id)->get();
+        if ($contactdata != '[]') {
+            $newdata = $contactdata->map(function ($item) {
+                $item->check = false;
+                return $item;
+            });
+            return response()->json([
+                'list' => $newdata,
+            ], 200);
+        } else {
+            return response()->json(['message' => 'No record found'], 422);
+        }
     }
 
     public function create(Request $request)
@@ -18,7 +32,6 @@ class BottleController extends Controller
         $rules = array(
             "num_of_bottle" => "required",
             "c_id" => "required",
-            "u_id" => "required",
             "price" => "required"
         );
 
@@ -27,11 +40,14 @@ class BottleController extends Controller
         if ($validator->fails()) {
             return $validator->errors();
         } else {
+            $user = Auth::user();
+
             $item = new Bottle;
             $item->num_of_bottle = $request->num_of_bottle;
             $item->c_id = $request->c_id;
-            $item->u_id = $request->u_id;
+            $item->u_id = $user->id;
             $item->price = $request->price;
+            $item->status = 'No';
             $item->save();
             if ($item->save()) {
                 return response()->json(['success' => "your data has been added", 'data' => $item], 200);
@@ -39,5 +55,31 @@ class BottleController extends Controller
                 return response()->json(['hello' => 'asdasdasd'], 422);
             }
         }
+    }
+    public function amountpaid(Request $request)
+    {
+        $user = Auth::user();
+
+        $Bottledata = Bottle::where('u_id', $user->id)->where('c_id', $request->c_id)->where('status', "No")->get();
+
+        // if ($Bottledata == '[]') {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'not found'
+        //     ], 404);
+        // }
+
+        // $newdata = $Bottledata->map(function ($item) {
+        //     $Key = Bottle::find($item->id);
+        //     if (is_null($Key))
+        //         return response()->json([
+        //             'success' => false,
+        //             'message' => 'Key not found'
+        //         ], 404);
+        //     $Key->update($item->all());
+        //     return $item;
+        // });
+
+        // return response()->json(['success' => true, 'message' => 'Key updated successfully']);
     }
 }

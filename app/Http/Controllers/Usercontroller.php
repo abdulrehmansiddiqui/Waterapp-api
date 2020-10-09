@@ -38,7 +38,7 @@ class Usercontroller extends Controller
             $token = $user->createToken('MyApp')->accessToken;
             return response()->json(['token' => $token, 'user' => $user]);
         } else {
-            return response()->json(['error' => 'Unauthorised'], 401);
+            return response()->json(['error' => 'Email & Password is incorrect'], 422);
         }
         // $user = User::select('*')->where('email', 'arehmans@live.com')->first();
         // $success['token'] = $user->createToken('MyApp')->accessToken;
@@ -48,5 +48,9 @@ class Usercontroller extends Controller
     {
         $user = Auth::user();
         return response()->json(['success' => $user]);
+    }
+    public function test()
+    {
+        return response()->json(['success' => "abcd"]);
     }
 }
