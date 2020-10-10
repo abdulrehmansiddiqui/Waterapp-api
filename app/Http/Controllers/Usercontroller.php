@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\User;
+use App\Contact;
+use App\Bottle;
 use Illuminate\Http\Request;
 use Laravel\Passport\Bridge\AccessToken;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class Usercontroller extends Controller
 {
@@ -47,7 +50,29 @@ class Usercontroller extends Controller
     public function details()
     {
         $user = Auth::user();
-        return response()->json(['success' => $user]);
+        $NumberofSupply = Bottle::where('u_id', $user->id)->where('created_at', '>=', Carbon::now()->subdays(30))->get();
+        $NumberofSupplyCount = count($NumberofSupply);
+        ///////////////////////////////////////////
+        $Monthlyincome = Bottle::where('u_id', $user->id)->where('status', 'Yes')->where('created_at', '>=', Carbon::now()->subdays(30))->get();
+        $newdata = $Monthlyincome->map(function ($item) {
+            $amount = $item->num_of_bottle * $item->price;
+            return  $amount;
+        });
+        $MonthlyincomeCount = $newdata->sum();
+        ///////////////////////////////////////////
+        $TotalBill = Bottle::where('u_id', $user->id)->where('status', 'No')->where('created_at', '>=', Carbon::now()->subdays(30))->get();
+        $TotalBill1 = $TotalBill->map(function ($item) {
+            $amount = $item->num_of_bottle * $item->price;
+            return  $amount;
+        });
+        $TotalBillCount = $TotalBill1->sum();
+        ///////////////////////////////////////////
+        return response()->json([
+            'success' => $user,
+            'NumberofSupply' => $NumberofSupplyCount,
+            'Monthlyincome' => $MonthlyincomeCount,
+            'TotalBill' => $TotalBillCount,
+        ]);
     }
     public function test()
     {

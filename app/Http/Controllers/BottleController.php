@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Contact;
 use App\Bottle;
 use Validator;
 use Illuminate\Support\Facades\Auth;
@@ -62,24 +63,54 @@ class BottleController extends Controller
 
         $Bottledata = Bottle::where('u_id', $user->id)->where('c_id', $request->c_id)->where('status', "No")->get();
 
-        // if ($Bottledata == '[]') {
-        //     return response()->json([
-        //         'success' => false,
-        //         'message' => 'not found'
-        //     ], 404);
-        // }
+        if ($Bottledata == '[]') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No Record found'
+            ], 404);
+        }
 
-        // $newdata = $Bottledata->map(function ($item) {
-        //     $Key = Bottle::find($item->id);
-        //     if (is_null($Key))
-        //         return response()->json([
-        //             'success' => false,
-        //             'message' => 'Key not found'
-        //         ], 404);
-        //     $Key->update($item->all());
-        //     return $item;
-        // });
+        $newdata = $Bottledata->map(function ($item) {
+            $item->status = 'Yes';
+            // $item->update($item->all());
+            return  $item->save();
+        });
 
-        // return response()->json(['success' => true, 'message' => 'Key updated successfully']);
+        return response()->json(['success' => true, 'message' => 'Amount updated successfully', 'status' => $newdata]);
+    }
+    public function amountpaidSingle(Request $request)
+    {
+        $Bottledata = Bottle::find($request->b_id);
+        if ($Bottledata == '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No Record found'
+            ], 404);
+        }
+
+        $Bottledata->status = 'Yes';
+        $Bottledata->save();
+        if ($Bottledata->save()) {
+            return response()->json(['success' => true, 'message' => 'Amount updated successfully', 'status' => $Bottledata]);
+        } else {
+            return response()->json(['message' => 'Error to update'], 422);
+        }
+    }
+    public function bottlehave(Request $request)
+    {
+        $Bottledata = Contact::find($request->c_id);
+        if ($Bottledata == '') {
+            return response()->json([
+                'success' => false,
+                'message' => 'No Record found'
+            ], 404);
+        }
+        $Bottledata->num_of_bottle = $request->bottle;
+        $Bottledata->save();
+        if ($Bottledata->save()) {
+            return response()->json(['success' => "your data has been Update", 'data' => $Bottledata], 200);
+        } else {
+            return response()->json(['message' => 'Error to update'], 422);
+        }
     }
 }

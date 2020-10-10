@@ -36,6 +36,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('bottlecreate', 'BottleController@create');
 
     Route::post('amountpaid', 'BottleController@amountpaid');
+    Route::post('amountpaidsingle', 'BottleController@amountpaidSingle');
+    Route::post('bottlehave', 'BottleController@bottlehave');
     
     
 });
